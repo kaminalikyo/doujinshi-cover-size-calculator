@@ -7,7 +7,7 @@ Doujinshi Cover Size Calculator
 
 ## 線上使用
 
-🔗 **[開啟同人誌封面尺寸計算機](https://hayako.github.io/doujinshi-cover-size-calculator/)**
+🔗 **[開啟同人誌封面尺寸計算機](https://kaminalikyo.github.io/doujinshi-cover-size-calculator/)**
 
 ※ 請將網址替換成實際的 GitHub Pages 網址。
 
