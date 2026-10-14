@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>同人誌封面尺寸計算機</title>
+<!-- 【維護區 A：外觀樣式】調整色彩、字體、間距不影響計算公式。 -->
+<style>
+:root{font-family:system-ui,-apple-system,'Noto Sans TC',sans-serif;color:#e9edf7;background:#101521}*{box-sizing:border-box}body{margin:0;padding:28px 14px}main{max-width:1080px;margin:auto}h1{font-size:clamp(24px,4vw,34px)}h2{font-size:21px;margin:0 0 16px}h3{font-size:16px}.muted,.hint{color:#b3c2d8;line-height:1.7}.hint{font-size:13px}.panel{background:#1b2433;border:1px solid #344156;border-radius:17px;padding:24px;margin:18px 0}.inputs{display:grid;grid-template-columns:repeat(auto-fit,minmax(185px,1fr));gap:15px}.field label{display:block;font-size:14px;font-weight:700;margin-bottom:7px}input,select,textarea{width:100%;background:#101827;color:#fff;border:1px solid #52627b;border-radius:9px;padding:11px;font-size:16px}input:disabled{opacity:.55;cursor:not-allowed}input:focus,select:focus{outline:2px solid #91b4ff}.results{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:18px}.result{background:#101827;padding:17px;border-radius:12px}.result small{color:#b3c2d8}.result strong{display:block;font-size:23px;margin:7px 0;overflow-wrap:anywhere}.error{color:#ffc0c0;min-height:22px;margin-top:10px}.diagram{overflow-x:auto;margin-top:18px}.diagram svg{display:block;width:100%;min-width:600px;height:auto}.guidegrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(265px,1fr));gap:16px}.guidegrid ol{padding-left:25px;line-height:1.9}.actions{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0}button{background:#8fb4ff;color:#101827;border:0;border-radius:9px;padding:12px 16px;font-weight:750;cursor:pointer}button.secondary{background:#35445e;color:white}button:disabled{opacity:.45;cursor:not-allowed}textarea{height:270px;font:12px/1.55 ui-monospace,SFMono-Regular,monospace;resize:vertical}.notice{border-left:3px solid #8fb4ff;padding:8px 13px;background:#142034;margin-top:15px}.notice p{margin:6px 0}.inline{display:flex;gap:12px;align-items:center;flex-wrap:wrap}.inline .field{flex:1;min-width:145px}@media(max-width:600px){.panel{padding:17px}}
+</style>
+</head>
+<body>
+<main>
+<h1>📚 同人誌封面尺寸計算機</h1>
+<p class="muted">書籍完成尺寸、展開尺寸、參考線座標與 Photoshop 腳本同步產生</p>
+
+<!-- 【維護區 B：前台使用說明】以下文字可直接改寫、增刪，不影響功能。 -->
+<section class="panel" id="user-instructions">
+<h2>使用說明</h2>
+<body link= "44c6f1">
+<body vlink= "f8da72">
+<p class="hint">🔶 本工具僅限電腦（桌機、筆電）使用，其他裝置可能無法正常顯示數值。</p>
+<p class="hint">🔶 本工具僅適用臺灣當地印刷規格，其他國家、語言可能有閱讀方向及單位之差異。</p>
+<p class="hint">🔶 先選擇書籍常用尺寸，或自行輸入「完成尺寸」寬高；再設定摺口、出血、裝訂方式、書背與解析度。下方會立即顯示封面展開尺寸及參考線。出血與摺口以左右兩側相同為前提；出血也套用於上下兩側。</p>
+<p class="hint">🔶 Photoshop 腳本使用 mm 座標，解析度選項只影響畫布像素換算（提供繪畫軟體使用前參考）。</p>
+<p class="hint">🔶 此計算機小工具僅為簡易計算封面製作尺寸用，製作印刷檔前，請向印刷廠確認規格。</p>
+<p class="hint">🔶 由於書背尺寸涉及紙質之條數差異，請先使用印刷廠提供之書背計算服務，再輸入至此工具進行加總。</p>
+<p class="hint">🔶 本工具歡迎自行下載原始碼修改、分享。</p>
+<p class="hint">小工具詠唱師：許神成 Kaminali Kyo<a href="https://www.facebook.com/LJYS.doujin" target="_blank">（同人社團：亂中有序）</a></p>
+</section>
+
+<section class="panel">
+<h2>01｜封面尺寸計算</h2>
+<div class="inputs">
+<div class="field"><label for="size">完成尺寸預設</label><select id="size"><option value="A5">A5｜148 × 210 mm</option><option value="B5">B5｜182 × 257 mm</option><option value="A4">A4｜210 × 297 mm</option><option value="B6">B6｜128 × 182 mm</option><option value="A6">A6｜105 × 148 mm</option><option value="custom">自訂完成尺寸</option></select></div>
+<div class="field"><label for="trimW">完成尺寸・寬（mm）</label><input id="trimW" type="number" min="0.001" step="any" value="148" required></div>
+<div class="field"><label for="trimH">完成尺寸・高（mm）</label><input id="trimH" type="number" min="0.001" step="any" value="210" required></div>
+<div class="field"><label for="flap">單側摺口（mm）</label><input id="flap" type="number" min="0" step="any" value="70" required></div>
+<div class="field"><label for="bleed">單側出血（mm）</label><input id="bleed" type="number" min="0" step="any" value="3" required></div>
+<div class="field"><label for="binding">裝訂方式</label><select id="binding"><option value="glue">膠裝（可設定書背）</option><option value="saddle">騎馬釘（書背固定 0）</option></select></div>
+<div class="field"><label for="spine">書背（mm）</label><input id="spine" type="number" min="0" step="any" value="5" required></div>
+<div class="field"><label for="dpi">解析度（dpi）</label><select id="dpi"><option value="300">300 dpi</option><option value="350">350 dpi</option><option value="600">600 dpi</option></select></div>
+<div class="field"><label for="direction">翻頁方向</label><select id="direction"><option value="left">左翻（橫向閱讀）</option><option value="right">右翻（直向閱讀）</option></select></div>
+</div>
+<p class="hint" id="bindingHint">膠裝：書背可自行輸入；若不需要摺口，可設為 0 mm。</p>
+<div id="error" class="error" role="status" aria-live="polite"></div>
+<div class="results">
+<div class="result"><small>完整封面展開尺寸（mm）</small><strong id="mm">—</strong><small>寬 × 高</small></div>
+<div class="result"><small id="pxLabel">300 dpi 估算像素</small><strong id="px">—</strong><small>px，四捨五入</small></div>
+<div class="result"><small>單面完成尺寸（mm）</small><strong id="trim">—</strong><small>寬 × 高，不含出血與摺口</small></div>
+</div>
+<div class="notice"><strong>翻頁與封面位置提示</strong><p id="directionHint"></p></div>
+<div class="diagram"><svg id="diagram" viewBox="0 0 920 295" role="img" aria-label="封面展開順序示意圖"></svg></div>
+<p class="hint">示意圖顯示區段排列順序；為方便辨識，出血與窄書背可能放大。請以實際 mm 座標為準。</p>
+</section>
+
+<section class="panel">
+<h2>02｜Photoshop 參考線產生器</h2>
+<div class="guidegrid"><div><h3>垂直參考線（X）</h3><ol id="vertical"></ol></div><div><h3>水平參考線（Y）</h3><ol id="horizontal"></ol></div></div>
+<p class="hint">原點為畫布左上角（0, 0）。只建立區段交界，不建立畫布最右邊及最下邊的參考線。當書背或其他區段為 0 mm 時，重複座標會自動去除。</p>
+<div class="actions"><button id="copyCoords" class="secondary">複製參考線座標</button></div>
+<h3>Photoshop JSX 腳本</h3>
+<div class="actions"><button id="copy">一鍵複製腳本</button><button id="download" class="secondary">下載 .jsx 腳本</button></div>
+<textarea id="script" readonly spellcheck="false" aria-label="Photoshop JSX 腳本"></textarea>
+<!-- 【維護區 C：Photoshop 前台使用說明】可依軟體版本或印刷廠需求修改。 -->
+<p class="hint">Photoshop 使用方式：先建立與計算結果相同 mm 尺寸的文件，再選擇「檔案 → 指令碼 → 瀏覽」，執行下載的 .jsx。腳本會檢查文件尺寸並建立參考線，不會刪除原有參考線；重複執行可能新增重複參考線。</p>
+</section>
+</main>
+
+<script>
+'use strict';
+/* 【維護區 D：尺寸預設】新增或修改規格時，同時調整上方 select 的選項與此表。 */
+const PRESETS={A5:[148,210],B5:[182,257],A4:[210,297],B6:[128,182],A6:[105,148]};
+const $=id=>document.getElementById(id);
+const fmt=n=>Number(n.toFixed(5)).toString();
+const px=(mm,dpi)=>Math.round(mm*dpi/25.4); // 1 英吋 = 25.4 mm
+let currentScript='',currentCoords='';
+const ids=['trimW','trimH','flap','bleed','spine','dpi','direction','binding'];
+
+/* 【維護區 E：輸入互動】選預設時填入寬高；手動改寬高時改成「自訂」。 */
+$('size').addEventListener('change',()=>{
+  const preset=PRESETS[$('size').value];
+  if(preset){$('trimW').value=preset[0];$('trimH').value=preset[1];}
+  update();
+});
+['trimW','trimH'].forEach(id=>$(id).addEventListener('input',()=>{
+  const preset=PRESETS[$('size').value];
+  if(preset && (Number($('trimW').value)!==preset[0] || Number($('trimH').value)!==preset[1]))$('size').value='custom';
+  update();
+}));
+$('binding').addEventListener('change',()=>{
+  const saddle=$('binding').value==='saddle';
+  $('spine').disabled=saddle;
+  // 騎馬釘暫時保留先前的膠裝書背，切回膠裝時可恢復。
+  if(saddle){$('spine').dataset.previous=$('spine').value;$('spine').value='0';}
+  else if($('spine').dataset.previous!==undefined){$('spine').value=$('spine').dataset.previous;}
+  $('bindingHint').textContent=saddle?'騎馬釘：書背固定為 0 mm，無法輸入。':'膠裝：書背可自行輸入；若不需要摺口，可設為 0 mm。';
+  update();
+});
+ids.filter(id=>!['trimW','trimH','binding'].includes(id)).forEach(id=>$(id).addEventListener('input',update));
+
+/* 【維護區 F：驗證與公式】空白不轉成 0；完成尺寸必須大於 0，其餘可為 0。 */
+function readValue(id,positive=false){
+  const input=$(id),raw=input.value.trim();
+  if(!raw)return {error:`請輸入「${input.labels?.[0]?.textContent||id}」。`};
+  const n=Number(raw);
+  if(!Number.isFinite(n)||n<0||(positive&&n===0))return {error:`「${input.labels?.[0]?.textContent||id}」必須是${positive?'大於 0':'不小於 0'} 的數字。`};
+  return {value:n};
+}
+function uniqueGuides(items){
+  const seen=new Set();return items.filter(([label,n])=>{const key=fmt(n);if(seen.has(key))return false;seen.add(key);return true;});
+}
+function renderList(id,items){
+  $(id).replaceChildren();items.forEach(([label,n])=>{const li=document.createElement('li');li.textContent=`${label}：${fmt(n)} mm`;$(id).appendChild(li);});
+}
+function clearResults(message){
+  $('error').textContent=message;
+  ['mm','px','trim'].forEach(id=>$(id).textContent='—');
+  $('vertical').replaceChildren();$('horizontal').replaceChildren();$('diagram').replaceChildren();
+  $('script').value='';currentScript='';currentCoords='';
+  ['copy','download','copyCoords'].forEach(id=>$(id).disabled=true);
+}
+function update(){
+  const parsed={};
+  for(const id of ['trimW','trimH','flap','bleed',...($('binding').value==='glue'?['spine']:[])]){
+    const result=readValue(id,id==='trimW'||id==='trimH');
+    if(result.error){clearResults(result.error);return;}
+    parsed[id]=result.value;
+  }
+  const w=parsed.trimW,h=parsed.trimH,f=parsed.flap,b=parsed.bleed;
+  const s=$('binding').value==='saddle'?0:parsed.spine;
+  const dpi=Number($('dpi').value),right=$('direction').value==='right';
+  // 展開寬 = 兩側出血 + 兩側摺口 + 封面與封底 + 書背；高 = 上下出血 + 完成高。
+  const totalW=2*b+2*f+2*w+s,totalH=2*b+h;
+  if(!Number.isFinite(totalW)||!Number.isFinite(totalH)){clearResults('數值超出可計算範圍。');return;}
+  $('error').textContent='';
+  $('mm').textContent=`${fmt(totalW)} × ${fmt(totalH)}`;
+  $('px').textContent=`${px(totalW,dpi).toLocaleString()} × ${px(totalH,dpi).toLocaleString()}`;
+  $('pxLabel').textContent=`${dpi} dpi 估算像素`;
+  $('trim').textContent=`${fmt(w)} × ${fmt(h)}`;
+  $('directionHint').textContent=right?'右翻（直向閱讀）：封面在展開圖左側，封底在右側。':'左翻（橫向閱讀）：封面在展開圖右側，封底在左側。';
+  // X 軸的每個位置都是由畫布最左邊開始逐段累加，最後右出血外緣不畫線。
+  const vx=uniqueGuides([
+    ['左出血結束',b],['左摺口結束',b+f],
+    [right?'封面結束／書背開始':'封底結束／書背開始',b+f+w],
+    [right?'書背結束／封底開始':'書背結束／封面開始',b+f+w+s],
+    [right?'封底結束／右摺口開始':'封面結束／右摺口開始',b+f+2*w+s],
+    ['右摺口結束／右出血開始',b+2*f+2*w+s]
+  ]);
+  const hy=uniqueGuides([['上出血結束',b],['完成尺寸下緣／下出血開始',b+h]]);
+  renderList('vertical',vx);renderList('horizontal',hy);
+  currentCoords=`垂直 X（mm）：${vx.map(v=>fmt(v[1])).join('、')}\n水平 Y（mm）：${hy.map(v=>fmt(v[1])).join('、')}`;
+  renderDiagram(w,f,b,s,totalW,totalH,right);
+  currentScript=makeScript(totalW,totalH,vx,hy,dpi);
+  $('script').value=currentScript;
+  ['copy','download','copyCoords'].forEach(id=>$(id).disabled=false);
+}
+
+/* 【維護區 G：示意圖】只做視覺提示，窄區段會放大，並非印刷比例尺。 */
+function renderDiagram(w,f,b,s,totalW,totalH,right){
+  const svg=$('diagram'),ns='http://www.w3.org/2000/svg';svg.replaceChildren();
+  function draw(tag,attrs,content){const e=document.createElementNS(ns,tag);Object.entries(attrs).forEach(([k,v])=>e.setAttribute(k,v));if(content!==undefined)e.textContent=content;svg.appendChild(e);return e;}
+  const segments=[['出血',b,'#56677c'],['左摺口',f,'#557ba0'],[right?'封面':'封底',w,'#527cba'],['書背',s,'#b68b57'],[right?'封底':'封面',w,'#648bcb'],['右摺口',f,'#557ba0'],['出血',b,'#56677c']];
+  const visual=segments.map(([name,n],i)=>Math.max(i===0||i===6?12:i===3?18:28,n));
+  const sum=visual.reduce((a,n)=>a+n,0);let x=24;
+  draw('text',{x:24,y:26,fill:'#dce7ff','font-size':15},right?'右翻：左側封面／右側封底':'左翻：左側封底／右側封面');
+  segments.forEach(([name,n,color],i)=>{const sw=visual[i]/sum*872;draw('rect',{x,y:49,width:sw,height:172,fill:color,stroke:'#dce7ff','stroke-width':1});if(sw>38)draw('text',{x:x+sw/2,y:131,'text-anchor':'middle',fill:'#fff','font-size':13},name);draw('text',{x:x+sw/2,y:244,'text-anchor':'middle',fill:'#c8d7ec','font-size':Math.min(12,sw/3)},fmt(n));x+=sw;});
+  draw('text',{x:460,y:281,'text-anchor':'middle',fill:'#dce7ff','font-size':14},`總寬 ${fmt(totalW)} mm｜總高 ${fmt(totalH)} mm`);
+}
+
+/* 【維護區 H：Photoshop JSX】腳本用毫米建立參考線，與畫布 dpi 無關。 */
+function makeScript(totalW,totalH,vx,hy,dpi){
+  const xs=vx.map(v=>fmt(v[1])),ys=hy.map(v=>fmt(v[1]));
+  return `#target photoshop\n/* 同人誌封面參考線｜畫布 ${fmt(totalW)} × ${fmt(totalH)} mm｜像素估算設定 ${dpi} dpi\n   X: ${xs.join(', ')} mm\n   Y: ${ys.join(', ')} mm\n*/\n(function () {\n  if (app.documents.length === 0) { alert('請先開啟封面文件。'); return; }\n  var doc = app.activeDocument;\n  var oldUnits = app.preferences.rulerUnits;\n  try {\n    app.preferences.rulerUnits = Units.MM;\n    var expectedW = ${fmt(totalW)}, expectedH = ${fmt(totalH)};\n    var actualW = doc.width.as('mm'), actualH = doc.height.as('mm');\n    if (Math.abs(actualW - expectedW) > 0.15 || Math.abs(actualH - expectedH) > 0.15) {\n      if (!confirm('目前文件：' + actualW.toFixed(2) + ' × ' + actualH.toFixed(2) + ' mm\\n預期尺寸：' + expectedW + ' × ' + expectedH + ' mm\\n仍要建立參考線嗎？')) return;\n    }\n    var vertical = [${xs.join(', ')}];\n    var horizontal = [${ys.join(', ')}];\n    for (var i = 0; i < vertical.length; i++) doc.guides.add(Direction.VERTICAL, new UnitValue(vertical[i], 'mm'));\n    for (var j = 0; j < horizontal.length; j++) doc.guides.add(Direction.HORIZONTAL, new UnitValue(horizontal[j], 'mm'));\n    alert('完成：' + vertical.length + ' 條垂直、' + horizontal.length + ' 條水平參考線。');\n  } catch (e) { alert('建立參考線失敗：' + e.message); }\n  finally { app.preferences.rulerUnits = oldUnits; }\n})();`;
+}
+
+/* 【維護區 I：複製／下載】不需伺服器；離線可下載 JSX，複製功能有舊版瀏覽器備援。 */
+async function copyText(text,source){
+  try{await navigator.clipboard.writeText(text);}catch(e){
+    source.focus();source.select();if(!document.execCommand('copy')){alert('無法自動複製，請手動選取文字複製。');return;}
+  }
+  alert('已複製！');
+}
+$('copy').addEventListener('click',()=>{if(currentScript)copyText(currentScript,$('script'));});
+$('copyCoords').addEventListener('click',()=>{
+  if(!currentCoords)return;
+  const temp=document.createElement('textarea');temp.value=currentCoords;document.body.appendChild(temp);
+  copyText(currentCoords,temp).finally(()=>temp.remove());
+});
+$('download').addEventListener('click',()=>{
+  if(!currentScript)return;
+  const blob=new Blob([currentScript],{type:'text/plain;charset=utf-8'});
+  const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='doujin_cover_guides.jsx';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+});
+update();
+</script>
+
+<style>
+  /* 贊助區塊 */
+  .donate-section {
+    text-align: center;
+    margin: 32px auto;
+  }
+
+  .donate-section p {
+    color: #666;
+    font-size: 14px;
+    margin-bottom: 12px;
+  }
+
+  /* 贊助按鈕 */
+  .donate-button {
+    display: inline-block;
+    padding: 12px 24px;
+    background-color: #F4BD59;
+    color: #3A2B20;
+    font-weight: bold;
+    text-decoration: none;
+    border-radius: 10px;
+    transition: background-color 0.2s ease;
+  }
+
+  .donate-button:hover {
+    background-color: #E5A93D;
+  }
+
+  .donate-button:focus-visible {
+    outline: 3px solid #3A2B20;
+    outline-offset: 3px;
+  }
+</style>
+
+<!-- 贊助區塊：可自由修改顯示文字 -->
+<div class="donate-section">
+<p class="hint">這個工具永久開放免費使用，也歡迎自由分享！</br>
+如果它成功拯救了你的封面製作體驗，歡迎請作者喝杯咖啡</p>
+  <a
+    class="donate-button"
+    href="https://portaly.cc/kaminali_hayako/support"
+    target="_blank"
+    rel="noopener noreferrer"
+  >
+    ☕ 支持作者
+  </a>
+</div>
+</body>
+</html>
+
+
+<!-- 我支持臺灣獨立 -->
